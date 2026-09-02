@@ -1,0 +1,26 @@
+services:
+  xkiro-openai-images-adapter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xkiro-openai-images-adapter:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-5080}:${PORT:-5080}"
+    init: true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.request;
+          urllib.request.urlopen(
+          'http://127.0.0.1:' + os.environ.get('PORT', '5080') + '/health'
+          )
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

@@ -1,0 +1,31 @@
+[project]
+name = "xkiro-openai-images-adapter"
+version = "0.1.0"
+description = "A lightweight OpenAI Images API adapter for Xkiro"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.141.1",
+  "httpx==0.28.1",
+  "pydantic-settings==2.15.0",
+  "python-multipart==0.0.32",
+  "uvicorn[standard]==0.52.4",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
+  "respx==0.23.1",
+  "pytest-cov==7.1.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
