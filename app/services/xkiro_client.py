@@ -38,11 +38,11 @@ class XkiroClient:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
 
-    async def create_edit(self, images: Sequence[ImagePart], data: dict) -> dict:
+    async def create_edit(self, images: Sequence[ImagePart], form: Sequence[tuple[str, object]]) -> dict:
         files = [("image", image) for image in images]
         try:
             response = await self.client.post(
-                f"{self.base_url}/v1/images/edits", headers=self.headers, files=files, data=data
+                f"{self.base_url}/v1/images/edits", headers=self.headers, files=files, data=dict(form)
             )
         except httpx.HTTPError as exc:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc

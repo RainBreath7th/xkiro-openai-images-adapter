@@ -87,6 +87,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             name = sorted(unknown)[0]
             raise ApiError(f"Unsupported parameter: {name}", 400, "invalid_request_error", name, "unsupported_parameter")
         upstream, selected_format = select_parameters(fields, EDIT_FIELDS, settings.strict_parameters)
+        if "n" in upstream:
+            upstream["n"] = _normalize_edit_n(upstream["n"])
         files = []
         for image in images:
             content = await image.read()
@@ -109,6 +111,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return await request.app.state.xkiro.list_models()
 
     return app
+
+
+def _normalize_edit_n(value: object) -> int:
+    """Normalize the edit `n` field to a positive integer.
+
+    The edit endpoint is a raw multipart request, so a client-supplied `n` arrives as
+    a string; Xkiro rejects non-integer bodies. Accept integer digits and reject
+    anything else with an OpenAI-style error.
+    """
+    if isinstance(value, bool) or not (
+        isinstance(value, int) or (isinstance(value, str) and value.strip().isdigit())
+    ):
+        raise ApiError('Invalid value for "n": must be a positive integer.', 400, "invalid_request_error", "n")
+    if isinstance(value, str):
+        return int(value.strip())
+    return value
 
 
 app = create_app()

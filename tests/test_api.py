@@ -53,6 +53,47 @@ async def test_edit_forwards_multiple_multipart_images(client):
     assert b"GIF89a-second" in body
 
 
+@respx.mock
+async def test_edit_forwards_normalized_n(client):
+    edit_route = respx.post("https://api.xkiro.com/v1/images/edits").mock(
+        return_value=httpx.Response(202, json={"id": "edit-3"})
+    )
+    respx.get("https://api.xkiro.com/v1/images/generations/edit-3").mock(
+        return_value=httpx.Response(
+            200, json={"status": "succeeded", "created": 321, "data": [{"url": "https://cdn.xkiro.com/a.png"}]}
+        )
+    )
+
+    response = await client.post(
+        "/v1/images/edits",
+        headers={"Authorization": "Bearer client-key"},
+        files={"image": ("input.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+        data={"prompt": "make it blue", "n": "2"},
+    )
+
+    assert response.status_code == 200
+    body = edit_route.calls.last.request.content
+    marker = b'name="n"'
+    assert marker in body
+    value = body[body.index(marker) + len(marker) :].split(b"\r\n\r\n", 1)[1].split(b"\r\n", 1)[0]
+    assert value == b"2"
+
+
+@respx.mock
+async def test_edit_rejects_invalid_n(client):
+    response = await client.post(
+        "/v1/images/edits",
+        headers={"Authorization": "Bearer client-key"},
+        files={"image": ("input.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+        data={"prompt": "make it blue", "n": "1.0"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["message"] == 'Invalid value for "n": must be a positive integer.'
+
+
+@respx.mock
+async def test_generation_forwards_xkiro_api_key(client):
     route = respx.post("https://api.xkiro.com/v1/images/generations").mock(
         return_value=httpx.Response(400, json={"error": {"message": "stop"}})
     )
