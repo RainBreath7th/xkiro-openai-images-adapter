@@ -2,7 +2,7 @@
 
 [English](README.md) · [日本語](README.ja.md)
 
-这是一个轻量的 FastAPI 适配服务，将 Xkiro 图片生成与编辑接口封装为同步的 OpenAI Images API 风格接口。服务内部创建 Xkiro 异步任务并按退避策略轮询，任务完成后返回 CDN URL 或 Base64 图片数据。
+这是一个轻量的 FastAPI 适配服务，将 [Xkiro](https://xkiro.com/) 图片生成与编辑接口封装为同步的 OpenAI Images API 风格接口。服务内部创建 Xkiro 异步任务并按退避策略轮询，任务完成后返回 CDN URL 或 Base64 图片数据。
 
 ## 功能
 

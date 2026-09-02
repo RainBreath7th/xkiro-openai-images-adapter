@@ -2,7 +2,7 @@
 
 - [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
 
-A lightweight FastAPI adapter that exposes Xkiro image generation and editing through synchronous, OpenAI Images API-shaped endpoints. It creates an asynchronous Xkiro job, polls it with backoff, and returns either a CDN URL or Base64 image bytes.
+A lightweight FastAPI adapter that exposes [Xkiro](https://xkiro.com/) image generation and editing through synchronous, OpenAI Images API-shaped endpoints. It creates an asynchronous Xkiro job, polls it with backoff, and returns either a CDN URL or Base64 image bytes.
 
 ## Features
 

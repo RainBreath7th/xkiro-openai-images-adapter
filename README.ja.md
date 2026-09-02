@@ -2,7 +2,7 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-Xkiro の画像生成・編集 API を、同期的な OpenAI Images API 形式のエンドポイントとして利用できる軽量な FastAPI アダプターです。内部で Xkiro の非同期ジョブを作成し、バックオフ付きでポーリングした後、CDN URL または Base64 画像データを返します。
+[Xkiro](https://xkiro.com/) の画像生成・編集 API を、同期的な OpenAI Images API 形式のエンドポイントとして利用できる軽量な FastAPI アダプターです。内部で Xkiro の非同期ジョブを作成し、バックオフ付きでポーリングした後、CDN URL または Base64 画像データを返します。
 
 ## 機能
 
