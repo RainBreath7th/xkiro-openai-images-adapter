@@ -16,12 +16,13 @@ A lightweight FastAPI adapter that exposes Xkiro image generation and editing th
 
 ## Quick start with Docker
 
+The image is published on Docker Hub as `rainbreath/xkiro-openai-images-adapter:latest`.
+
 ```bash
-docker build -t xkiro-openai-images-adapter .
 docker run --rm -p 5080:5080 \
   -e API_KEY=replace-me \
   -e XKIRO_API_KEY=your-xkiro-key \
-  xkiro-openai-images-adapter
+  rainbreath/xkiro-openai-images-adapter:latest
 ```
 
 The service listens on port `5080` by default.
@@ -32,14 +33,37 @@ Copy `.env.example` to `.env`, replace both required keys, then start the servic
 
 ```bash
 cp .env.example .env
-docker compose up --build -d
+docker compose up -d
 ```
 
-The Compose file publishes the configured `PORT` (default `5080`) and includes a health check. Stop it with:
+The default Compose configuration publishes the service port on the host. Stop it with:
 
 ```bash
 docker compose down
 ```
+
+## Use only within an existing Docker network
+
+To make the adapter available only to other containers on the same Docker network (for example, `new-api`), use the internal Compose file. Ensure the target network exists first; do not create it again if `new-api` already uses it:
+
+```bash
+docker network inspect new-api >/dev/null 2>&1 || docker network create new-api
+docker compose -f docker-compose.internal.yaml up -d
+```
+
+The internal configuration reads `DOCKER_NETWORK` from `.env`, defaulting to `new-api`. If the existing network has another name, set it instead:
+
+```env
+DOCKER_NETWORK=your-existing-network
+```
+
+Other containers on that network can use this base URL:
+
+```text
+http://xkiro-openai-images-adapter:5080
+```
+
+Configure `new-api` with that URL and use the adapter's `API_KEY` as the Bearer key. This configuration has no `ports` mapping, so the service is not directly reachable through a host port or from outside the Docker network.
 
 ## Configuration
 
@@ -74,7 +98,8 @@ xkiro-openai-images-adapter/
 │   ├── test_api.py                # Endpoint, authentication, response, and models tests
 │   └── test_image_format.py       # Image signature detection tests
 ├── Dockerfile                     # Minimal non-root production image
-├── docker-compose.yaml            # One-command local/container deployment
+├── docker-compose.yaml            # Published image with host port mapping
+├── docker-compose.internal.yaml   # Existing Docker network without port mapping
 ├── .env.example                   # Safe configuration template
 ├── .dockerignore                  # Files excluded from the image build context
 ├── .gitignore                     # Local secrets and generated files excluded from Git
@@ -84,7 +109,7 @@ xkiro-openai-images-adapter/
 └── README.ja.md                   # Japanese documentation
 ```
 
-`app/main.py` is the runtime entry point. The generation and editing routes share `xkiro_client.py`, `poller.py`, and `response_builder.py`; this keeps upstream communication, job lifecycle handling, and OpenAI response conversion in one place. `docker-compose.yaml` loads secrets and runtime options from `.env`, while `Dockerfile` is suitable for a direct image build.
+`app/main.py` is the runtime entry point. The generation and editing routes share `xkiro_client.py`, `poller.py`, and `response_builder.py`; this keeps upstream communication, job lifecycle handling, and OpenAI response conversion in one place. The Compose files load secrets and runtime options from `.env`; `docker-compose.yaml` publishes a host port, while `docker-compose.internal.yaml` joins an existing Docker network without publishing a port. `Dockerfile` remains available for building a custom image.
 
 ## API behavior
 

@@ -4,8 +4,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - "${PORT:-5080}:${PORT:-5080}"
+    networks:
+      - internal
     init: true
     healthcheck:
       test:
@@ -21,3 +21,8 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 3
+
+networks:
+  internal:
+    external: true
+    name: ${DOCKER_NETWORK:-new-api}

@@ -16,15 +16,54 @@ Xkiro の画像生成・編集 API を、同期的な OpenAI Images API 形式�
 
 ## Docker でクイックスタート
 
+イメージは Docker Hub の `rainbreath/xkiro-openai-images-adapter:latest` として公開されています。
+
 ```bash
-docker build -t xkiro-openai-images-adapter .
 docker run --rm -p 5080:5080 \
   -e API_KEY=replace-me \
   -e XKIRO_API_KEY=your-xkiro-key \
-  xkiro-openai-images-adapter
+  rainbreath/xkiro-openai-images-adapter:latest
 ```
 
 既定の待受ポートは `5080` です。
+
+## Docker Compose でクイックスタート
+
+`.env.example` を `.env` にコピーし、必須キーを設定してから起動します。
+
+```bash
+cp .env.example .env
+docker compose up -d
+```
+
+既定の Compose 設定では、サービスのポートをホストに公開します。停止するには次を実行します。
+
+```bash
+docker compose down
+```
+
+## 既存の Docker ネットワーク内だけで使用する
+
+アダプターを `new-api` など同じ Docker ネットワーク内のコンテナだけから利用する場合は、内部用 Compose ファイルを使います。まず対象ネットワークを作成してください。`new-api` がすでにそのネットワークを使用している場合は、再作成する必要はありません。
+
+```bash
+docker network inspect new-api >/dev/null 2>&1 || docker network create new-api
+docker compose -f docker-compose.internal.yaml up -d
+```
+
+内部設定は `.env` の `DOCKER_NETWORK` を読み込み、既定値は `new-api` です。ネットワーク名が異なる場合は変更してください。
+
+```env
+DOCKER_NETWORK=your-existing-network
+```
+
+同じネットワーク上の他のコンテナからは、次のベース URL でアクセスできます。
+
+```text
+http://xkiro-openai-images-adapter:5080
+```
+
+`new-api` にはこの URL を設定し、アダプターの `API_KEY` を Bearer キーとして使用してください。内部設定には `ports` マッピングがないため、ホストポートや Docker ネットワーク外から直接アクセスすることはできません。
 
 ## 設定
 
@@ -59,7 +98,8 @@ xkiro-openai-images-adapter/
 │   ├── test_api.py                # エンドポイント、認証、レスポンス、models のテスト
 │   └── test_image_format.py       # 画像シグネチャ検出テスト
 ├── Dockerfile                     # 非 root ユーザーで動く軽量な本番イメージ
-├── docker-compose.yaml            # 1 コマンドで起動するコンテナ設定
+├── docker-compose.yaml            # 公開済みイメージとホストポート公開
+├── docker-compose.internal.yaml   # 既存 Docker ネットワークのみ（ポート非公開）
 ├── .env.example                   # 安全な設定テンプレート
 ├── .dockerignore                  # Docker ビルドコンテキストから除外するファイル
 ├── .gitignore                     # ローカルキーと生成ファイルの Git 除外設定
@@ -69,7 +109,7 @@ xkiro-openai-images-adapter/
 └── README.ja.md                   # 日本語ドキュメントンス
 ```
 
-`app/main.py` が実行エントリーポイントです。生成と編集のルートは `xkiro_client.py`、`poller.py`、`response_builder.py` を共有し、上流通信、ジョブのライフサイクル、OpenAI レスポンス変換を一か所で管理します。`docker-compose.yaml` は `.env` からキーと実行設定を読み込み、`Dockerfile` は直接イメージをビルドする場合に使えます。
+`app/main.py` が実行エントリーポイントです。生成と編集のルートは `xkiro_client.py`、`poller.py`、`response_builder.py` を共有し、上流通信、ジョブのライフサイクル、OpenAI レスポンス変換を一か所で管理します。2 つの Compose ファイルは `.env` からキーと実行設定を読み込みます。`docker-compose.yaml` はホストポートを公開し、`docker-compose.internal.yaml` は既存の Docker ネットワークに参加するだけでポートを公開しません。`Dockerfile` はカスタムイメージのビルドに利用できます。
 
 ## API の動作
 
