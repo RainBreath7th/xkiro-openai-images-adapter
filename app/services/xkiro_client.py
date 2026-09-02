@@ -26,7 +26,9 @@ class XkiroClient:
 
     async def create_generation(self, payload: dict) -> dict:
         try:
-            response = await self.client.post(f"{self.base_url}/v1/images/generations", json=payload)
+            response = await self.client.post(
+                f"{self.base_url}/v1/images/generations", headers=self.headers, json=payload
+            )
         except httpx.HTTPError as exc:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
@@ -34,21 +36,27 @@ class XkiroClient:
     async def create_edit(self, image: tuple[str, bytes, str], data: dict) -> dict:
         files = {"image": image}
         try:
-            response = await self.client.post(f"{self.base_url}/v1/images/edits", files=files, data=data)
+            response = await self.client.post(
+                f"{self.base_url}/v1/images/edits", headers=self.headers, files=files, data=data
+            )
         except httpx.HTTPError as exc:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
 
     async def get_job(self, job_id: str) -> dict:
         try:
-            response = await self.client.get(f"{self.base_url}/v1/images/generations/{job_id}")
+            response = await self.client.get(
+                f"{self.base_url}/v1/images/generations/{job_id}", headers=self.headers
+            )
         except httpx.HTTPError as exc:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
 
     async def list_models(self) -> dict:
         try:
-            response = await self.client.get(f"{self.base_url}/v1/models", params={"modality": "image"})
+            response = await self.client.get(
+                f"{self.base_url}/v1/models", headers=self.headers, params={"modality": "image"}
+            )
         except httpx.HTTPError as exc:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
