@@ -121,7 +121,7 @@ xkiro-openai-images-adapter/
 
 生成和编辑接口会等待 Xkiro 任务完成。轮询从 2 秒后开始，间隔按 1.5 倍增长，最大为 10 秒。客户端断开连接时会取消进行中的请求。
 
-编辑接口接收一个 multipart `image` 文件，支持 JPEG、PNG、GIF 和 WebP。Xkiro 文档没有定义多图或 `mask` 能力，因此适配器不会自行添加这些语义。默认忽略不支持的字段；设置 `STRICT_PARAMETERS=true` 后会返回 OpenAI 风格的 `400` 错误。
+编辑接口接收一个或多个 multipart `image` 文件，并按上传顺序将全部文件直接透传给 Xkiro，支持 JPEG、PNG、GIF 和 WebP。默认忽略不支持的字段；设置 `STRICT_PARAMETERS=true` 后会返回 OpenAI 风格的 `400` 错误。
 
 ## 本地开发
 

@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, FastAPI, Request, UploadFile
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.datastructures import UploadFile
 
 from app.config import Settings
 from app.dependencies import require_api_key
@@ -77,9 +78,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def edits(request: Request):
         form = await request.form()
         images = form.getlist("image")
-        if len(images) != 1 or not isinstance(images[0], UploadFile):
-            raise ApiError("Exactly one image file is required", 400, "invalid_request_error", "image")
-        image = images[0]
+        if not images or any(not isinstance(image, UploadFile) for image in images):
+            raise ApiError("At least one image file is required", 400, "invalid_request_error", "image")
         allowed = {"prompt", "model", "size", "n", "response_format"}
         fields = {key: form[key] for key in form if key != "image" and key in allowed}
         unknown = {key for key in form if key not in allowed and key != "image"}
@@ -87,14 +87,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             name = sorted(unknown)[0]
             raise ApiError(f"Unsupported parameter: {name}", 400, "invalid_request_error", name, "unsupported_parameter")
         upstream, selected_format = select_parameters(fields, EDIT_FIELDS, settings.strict_parameters)
-        content = await image.read()
-        if not content:
-            raise ApiError("Image file is empty", 400, "invalid_request_error", "image")
-        detected_type = detect_image_type(content)
-        if detected_type is None:
-            raise ApiError("Image must be JPEG, PNG, GIF, or WebP", 400, "invalid_request_error", "image")
+        files = []
+        for image in images:
+            content = await image.read()
+            if not content:
+                raise ApiError("Image file is empty", 400, "invalid_request_error", "image")
+            detected_type = detect_image_type(content)
+            if detected_type is None:
+                raise ApiError("Image must be JPEG, PNG, GIF, or WebP", 400, "invalid_request_error", "image")
+            files.append((image.filename or "image", content, detected_type))
         client: XkiroClient = request.app.state.xkiro
-        created = await client.create_edit((image.filename or "image", content, detected_type), upstream)
+        created = await client.create_edit(files, upstream)
         job_id = created.get("id")
         if not job_id:
             raise ApiError("Xkiro returned no job id", 502, "api_error", code="invalid_upstream_response")

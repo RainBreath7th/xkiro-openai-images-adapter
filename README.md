@@ -122,7 +122,7 @@ The adapter keeps Xkiro-supported fields and values unchanged. It does not inven
 
 The generations and edits endpoints wait for the Xkiro job to finish. Polling starts after two seconds, grows by 1.5x, and is capped at ten seconds. A client disconnect cancels the in-flight request.
 
-Edits accept one multipart `image` file. JPEG, PNG, GIF, and WebP are supported. Xkiro's documentation does not define multi-image or `mask` support, so the adapter does not add those semantics. Unsupported fields are ignored by default; set `STRICT_PARAMETERS=true` to receive an OpenAI-style `400` error.
+Edits accept one or more multipart `image` files and forward all of them to Xkiro in upload order. JPEG, PNG, GIF, and WebP are supported. Unsupported fields are ignored by default; set `STRICT_PARAMETERS=true` to receive an OpenAI-style `400` error.
 
 ## Local development
 

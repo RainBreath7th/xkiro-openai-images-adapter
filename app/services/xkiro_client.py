@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import httpx
 
 from app.exceptions import ApiError, upstream_error
+
+
+ImagePart = tuple[str, bytes, str]
 
 
 class XkiroClient:
@@ -33,8 +38,8 @@ class XkiroClient:
             raise ApiError("Unable to reach Xkiro", 502, "api_error", code="upstream_connection_error") from exc
         return await self._json(response)
 
-    async def create_edit(self, image: tuple[str, bytes, str], data: dict) -> dict:
-        files = {"image": image}
+    async def create_edit(self, images: Sequence[ImagePart], data: dict) -> dict:
+        files = [("image", image) for image in images]
         try:
             response = await self.client.post(
                 f"{self.base_url}/v1/images/edits", headers=self.headers, files=files, data=data
